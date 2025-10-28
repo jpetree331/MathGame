@@ -329,7 +329,8 @@ class SessionManager {
             userAnswer: userAnswer,
             correctAnswer: correctAnswer,
             isCorrect: isCorrect,
-            isFirstAttempt: isFirstAttempt
+            isFirstAttempt: isFirstAttempt,
+            timestamp: new Date().toISOString()
         };
 
         this.sessionAnswers.push(answerData);
@@ -546,8 +547,34 @@ class TimedChallenge {
             this.correctAnswers++;
         }
         
+        // Log detailed answer data
+        this.logTimedAnswer(this.currentQuestion.question, userAnswer, this.currentQuestion.answer, isCorrect);
+        
         this.updateDisplay();
         this.nextQuestion();
+    }
+    
+    logTimedAnswer(question, userAnswer, correctAnswer, isCorrect) {
+        const answerData = {
+            challengeId: this.challengeId,
+            studentName: this.currentStudent,
+            question: question,
+            userAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Save to localStorage
+        const challenges = JSON.parse(localStorage.getItem('timedChallenges') || '[]');
+        const challengeIndex = challenges.findIndex(c => c.id === this.challengeId);
+        if (challengeIndex !== -1) {
+            challenges[challengeIndex].answers = challenges[challengeIndex].answers || [];
+            challenges[challengeIndex].answers.push(answerData);
+            localStorage.setItem('timedChallenges', JSON.stringify(challenges));
+        }
+        
+        console.log('Timed answer logged:', answerData);
     }
     
     updateDisplay() {
@@ -704,6 +731,7 @@ class TimesTableGame {
     }
     
     showStudentNameScreen(mode = 'normal') {
+        console.log('showStudentNameScreen called with mode:', mode);
         this.currentView = 'name';
         this.startScreen.style.display = 'none';
         this.studentNameScreen.style.display = 'block';
@@ -720,6 +748,7 @@ class TimesTableGame {
             titleElement.textContent = 'Enter Your Name';
         }
         
+        console.log('Student name screen displayed, mode:', mode);
         this.studentNameInput.focus();
     }
     
@@ -1060,7 +1089,7 @@ class TimesTableGame {
             
             if (result.success) {
                 this.displayStudentList(result.students);
-            } else {
+        } else {
                 throw new Error(result.error || 'Failed to get students');
             }
         } catch (error) {
@@ -1165,7 +1194,50 @@ class TimesTableGame {
                     <span>Correct: ${session.correct_answers}</span>
                     <span>Accuracy: ${accuracy}%</span>
                 </div>
+                <div class="session-answers" style="display: none;">
+                    <h5>Answer Details:</h5>
+                    <div class="answers-list"></div>
+                </div>
+                <button class="toggle-answers-btn">Show Answer Details</button>
             `;
+            
+            // Add toggle functionality
+            const toggleBtn = sessionDiv.querySelector('.toggle-answers-btn');
+            const answersDiv = sessionDiv.querySelector('.session-answers');
+            const answersList = sessionDiv.querySelector('.answers-list');
+            
+            toggleBtn.addEventListener('click', () => {
+                if (answersDiv.style.display === 'none') {
+                    // Show answers
+                    answersDiv.style.display = 'block';
+                    toggleBtn.textContent = 'Hide Answer Details';
+                    
+                    // Populate answers if not already done
+                    if (answersList.children.length === 0 && session.answers) {
+                        session.answers.forEach((answer, index) => {
+                            const answerDiv = document.createElement('div');
+                            answerDiv.className = `answer-item ${answer.isCorrect ? 'correct' : 'incorrect'}`;
+                            
+                            const statusIcon = answer.isCorrect ? '✅' : '❌';
+                            const userAnswerText = answer.userAnswer !== null ? answer.userAnswer : 'No answer';
+                            
+                            answerDiv.innerHTML = `
+                                <div class="answer-question">${statusIcon} Question ${index + 1}: ${answer.question}</div>
+                                <div class="answer-details">
+                                    <span class="student-answer">Student answered: ${userAnswerText}</span>
+                                    <span class="correct-answer">Correct answer: ${answer.correctAnswer}</span>
+                                </div>
+                            `;
+                            
+                            answersList.appendChild(answerDiv);
+                        });
+                    }
+                } else {
+                    // Hide answers
+                    answersDiv.style.display = 'none';
+                    toggleBtn.textContent = 'Show Answer Details';
+                }
+            });
             
             this.sessionsList.appendChild(sessionDiv);
         });
@@ -1216,8 +1288,6 @@ class TimesTableGame {
             );
             
             this.displayLeaderboard(students);
-        } catch (error) {
-            console.error("Error loading leaderboard:", error);
         }
     }
     
@@ -1329,7 +1399,10 @@ class TimesTableGame {
         }
         
         if (this.viewDataBtn) {
-            this.viewDataBtn.addEventListener('click', () => this.showDataView());
+            this.viewDataBtn.addEventListener('click', () => {
+                console.log('View Data button clicked!');
+                this.showDataView();
+            });
         } else {
             console.error('viewDataBtn not found!');
         }
@@ -1423,6 +1496,14 @@ class TimesTableGame {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, starting initialization...');
     
+    // Test if all required elements exist
+    console.log('Testing element availability...');
+    console.log('startScreen:', document.getElementById('startScreen'));
+    console.log('startGameBtn:', document.getElementById('startGameBtn'));
+    console.log('timedChallengeBtn:', document.getElementById('timedChallengeBtn'));
+    console.log('viewDataBtn:', document.getElementById('viewDataBtn'));
+    console.log('timedChallengeScreen:', document.getElementById('timedChallengeScreen'));
+    
     try {
         const dbInitialized = await initializeDatabase();
         console.log('Database initialization result:', dbInitialized);
@@ -1432,10 +1513,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     console.log('Creating game...');
     
-    // Create game instance
-    window.game = new TimesTableGame();
-    console.log('Game created:', window.game);
-    
-    // Test that the game is working
-    console.log('Game ready - you can now click Start Game!');
+    try {
+        // Create game instance
+        window.game = new TimesTableGame();
+        console.log('Game created:', window.game);
+        
+        // Test that the game is working
+        console.log('Game ready - you can now click Start Game!');
+    } catch (error) {
+        console.error('Error creating game:', error);
+    }
 });

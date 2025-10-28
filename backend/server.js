@@ -109,15 +109,16 @@ app.post('/api/answers', async (req, res) => {
             userAnswer, 
             correctAnswer, 
             isCorrect, 
-            isFirstAttempt 
+            isFirstAttempt,
+            timestamp 
         } = req.body;
         
         await tursoClient.execute(`
             INSERT INTO answers (
                 session_id, student_name, level, question, 
-                user_answer, correct_answer, is_correct, is_first_attempt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [sessionId, studentName, level, question, userAnswer, correctAnswer, isCorrect, isFirstAttempt]);
+                user_answer, correct_answer, is_correct, is_first_attempt, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [sessionId, studentName, level, question, userAnswer, correctAnswer, isCorrect, isFirstAttempt, timestamp || new Date().toISOString()]);
         
         res.json({ 
             success: true, 
@@ -236,17 +237,38 @@ app.get('/api/students/:studentName', async (req, res) => {
             ORDER BY s.start_time DESC
         `, [studentName]);
         
-        const sessions = sessionsResult.rows.map(row => ({
-            id: row.id,
-            student_name: row.student_name,
-            level: row.level,
-            start_time: row.start_time,
-            end_time: row.end_time,
-            total_questions: row.total_questions || 0,
-            correct_answers: row.correct_answers || 0,
-            accuracy: row.total_questions > 0 ? (row.correct_answers / row.total_questions) * 100 : 0,
-            level_passed: row.level_passed
-        }));
+        const sessions = [];
+        for (const row of sessionsResult.rows) {
+            // Get detailed answers for this session
+            const answersResult = await tursoClient.execute(`
+                SELECT question, user_answer, correct_answer, is_correct, is_first_attempt, timestamp
+                FROM answers 
+                WHERE session_id = ?
+                ORDER BY timestamp ASC
+            `, [row.id]);
+            
+            const answers = answersResult.rows.map(answerRow => ({
+                question: answerRow.question,
+                userAnswer: answerRow.user_answer,
+                correctAnswer: answerRow.correct_answer,
+                isCorrect: answerRow.is_correct,
+                isFirstAttempt: answerRow.is_first_attempt,
+                timestamp: answerRow.timestamp
+            }));
+            
+            sessions.push({
+                id: row.id,
+                student_name: row.student_name,
+                level: row.level,
+                start_time: row.start_time,
+                end_time: row.end_time,
+                total_questions: row.total_questions || 0,
+                correct_answers: row.correct_answers || 0,
+                accuracy: row.total_questions > 0 ? (row.correct_answers / row.total_questions) * 100 : 0,
+                level_passed: row.level_passed,
+                answers: answers
+            });
+        }
         
         // Get student stats
         const statsResult = await tursoClient.execute(`
