@@ -1,15 +1,9 @@
-// Database Configuration
-// Uses config.js for credentials (generated at build time)
-const DB_CONFIG = window.DB_CONFIG || {
-    url: "libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io",
-    authToken: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw"
-};
+// API Configuration
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+    ? 'https://math-game-backend-production.up.railway.app/api'
+    : 'http://localhost:3000/api';
 
-console.log("DB_CONFIG loaded:", {
-    url: DB_CONFIG.url,
-    hasToken: !!DB_CONFIG.authToken,
-    tokenLength: DB_CONFIG.authToken ? DB_CONFIG.authToken.length : 0
-});
+console.log('API Base URL:', API_BASE_URL);
 
 // Initialize Turso client
 let tursoClient = null;
@@ -214,22 +208,34 @@ class SessionManager {
             this.currentStudent = studentName;
             this.currentLevel = level;
             
-            if (tursoClient) {
-                const result = await tursoClient.execute(`
-                    INSERT INTO sessions (student_name, level, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)
-                `, [studentName, level]);
-                this.currentSessionId = result.lastInsertRowid;
-            } else {
-                // Fallback to localStorage
-                this.currentSessionId = Date.now();
-            }
+            const response = await fetch(`${API_BASE_URL}/sessions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    studentName,
+                    level
+                })
+            });
             
-            this.sessionStartTime = new Date();
-            this.sessionAnswers = [];
-            console.log("Session started:", this.currentSessionId);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.currentSessionId = result.sessionId;
+                this.sessionStartTime = new Date();
+                this.sessionAnswers = [];
+                console.log("Session started:", this.currentSessionId);
+            } else {
+                throw new Error(result.error || 'Failed to start session');
+            }
         } catch (error) {
             console.error("Error starting session:", error);
-            this.currentSessionId = Date.now(); // Fallback
+            // Fallback to localStorage
+            this.currentSessionId = Date.now();
+            this.sessionStartTime = new Date();
+            this.sessionAnswers = [];
+            console.log("Session started (localStorage fallback):", this.currentSessionId);
         }
     }
 
