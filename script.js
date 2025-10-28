@@ -366,6 +366,11 @@ class TimesTableGame {
         this.startGameBtn = document.getElementById('startGameBtn');
         this.viewDataBtn = document.getElementById('viewDataBtn');
         
+        console.log('Initializing elements...');
+        console.log('startScreen:', this.startScreen);
+        console.log('startGameBtn:', this.startGameBtn);
+        console.log('viewDataBtn:', this.viewDataBtn);
+        
         // Student name screen elements
         this.studentNameScreen = document.getElementById('studentNameScreen');
         this.studentNameInput = document.getElementById('studentNameInput');
@@ -1039,8 +1044,24 @@ class TimesTableGame {
     
     setupEventListeners() {
         // Start screen events
-        this.startGameBtn.addEventListener('click', () => this.showStudentNameScreen());
-        this.viewDataBtn.addEventListener('click', () => this.showDataView());
+        console.log('Setting up event listeners...');
+        console.log('startGameBtn element:', this.startGameBtn);
+        console.log('viewDataBtn element:', this.viewDataBtn);
+        
+        if (this.startGameBtn) {
+            this.startGameBtn.addEventListener('click', () => {
+                console.log('Start Game button clicked!');
+                this.showStudentNameScreen();
+            });
+        } else {
+            console.error('startGameBtn not found!');
+        }
+        
+        if (this.viewDataBtn) {
+            this.viewDataBtn.addEventListener('click', () => this.showDataView());
+        } else {
+            console.error('viewDataBtn not found!');
+        }
         
         // Student name screen events
         this.confirmNameBtn.addEventListener('click', () => {
