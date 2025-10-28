@@ -5,6 +5,9 @@
 .env.test.local
 .env.production.local
 
+# Generated config file with sensitive data
+config.js
+
 # Logs
 logs
 *.log

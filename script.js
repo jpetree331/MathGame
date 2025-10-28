@@ -1,6 +1,6 @@
 // Database Configuration
-// Turso database credentials
-const DB_CONFIG = {
+// Uses config.js for credentials (generated at build time)
+const DB_CONFIG = window.DB_CONFIG || {
     url: "libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io",
     authToken: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw"
 };
