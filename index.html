@@ -173,10 +173,14 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-        import { createClient } from 'https://cdn.skypack.dev/@libsql/client@0.8.0';
-        window.libsql = { createClient };
-        console.log("libSQL loaded via ES module");
+    <script src="https://cdn.jsdelivr.net/npm/@libsql/client@0.8.0/dist/web.js"></script>
+    <script>
+        // Test script loading
+        console.log("Testing libSQL availability...");
+        console.log("typeof libsql:", typeof libsql);
+        if (typeof libsql !== 'undefined') {
+            console.log("libSQL object keys:", Object.keys(libsql));
+        }
     </script>
     <script src="config.js"></script>
     <script src="script.js"></script>
