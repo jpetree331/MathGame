@@ -20,6 +20,7 @@
             </div>
             <div class="start-buttons">
                 <button id="startGameBtn" class="start-btn">🎯 Start Game</button>
+                <button id="timedChallengeBtn" class="start-btn">⏰ Timed Challenge</button>
                 <button id="viewDataBtn" class="start-btn">📊 View Progress Data</button>
             </div>
         </div>
@@ -104,6 +105,38 @@
                     <button id="nextLevelBtn" class="start-btn" style="display: none;">Next Level</button>
                     <button id="retryLevelBtn" class="start-btn" style="display: none;">Try Again</button>
                     <button id="backToStartFromLevelBtn" class="back-btn">Back to Start</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="timed-challenge-screen" id="timedChallengeScreen" style="display: none;">
+            <div class="timed-challenge-content">
+                <div class="timed-header">
+                    <h2>⏰ Timed Challenge</h2>
+                    <div class="timer-display">
+                        <span id="timerDisplay">30</span> seconds
+                    </div>
+                </div>
+                <div class="timed-stats">
+                    <div class="timed-stat">
+                        <span class="timed-label">Questions:</span>
+                        <span class="timed-value" id="timedQuestionsAnswered">0</span>
+                    </div>
+                    <div class="timed-stat">
+                        <span class="timed-label">Correct:</span>
+                        <span class="timed-value" id="timedCorrectAnswers">0</span>
+                    </div>
+                </div>
+                <div class="timed-question-area">
+                    <div class="timed-question" id="timedQuestionText">Get ready...</div>
+                    <div class="timed-answer-input">
+                        <input type="number" id="timedAnswerInput" placeholder="Your answer">
+                        <button id="timedSubmitBtn">Submit</button>
+                    </div>
+                </div>
+                <div class="timed-challenge-buttons">
+                    <button id="startTimedChallengeBtn" class="start-btn">Start Challenge</button>
+                    <button id="backToStartFromTimedBtn" class="back-btn">Back to Start</button>
                 </div>
             </div>
         </div>

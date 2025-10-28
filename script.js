@@ -570,8 +570,12 @@ class TimesTableGame {
                 let question, answer;
                 
                 if (operation === 'multiplication') {
-                    const multiplicand = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
-                    const multiplier = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
+                    let multiplicand, multiplier;
+                    do {
+                        multiplicand = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
+                        multiplier = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
+                    } while (multiplicand === 0 || multiplier === 0); // Exclude multiplication by 0
+                    
                     answer = multiplicand * multiplier;
                     question = `${multiplicand} × ${multiplier} = ?`;
                 } else if (operation === 'division') {
