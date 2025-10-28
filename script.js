@@ -14,15 +14,35 @@ console.log("DB_CONFIG loaded:", {
 // Initialize Turso client
 let tursoClient = null;
 
+// Wait for libSQL to load before initializing
+function waitForLibSQL() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+        
+        const checkLibSQL = () => {
+            attempts++;
+            if (typeof libsql !== 'undefined') {
+                console.log("libSQL loaded successfully");
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                reject(new Error("libSQL failed to load after 5 seconds"));
+            } else {
+                setTimeout(checkLibSQL, 100);
+            }
+        };
+        
+        checkLibSQL();
+    });
+}
+
 // Initialize database connection
 async function initializeDatabase() {
     try {
         console.log("DOM loaded, initializing database...");
         
-        // Check if libsql is available
-        if (typeof libsql === 'undefined') {
-            throw new Error("libsql client not loaded - check CDN");
-        }
+        // Wait for libSQL to load
+        await waitForLibSQL();
         
         console.log("DB_CONFIG loaded:", {
             url: DB_CONFIG.url,
@@ -632,7 +652,7 @@ class TimesTableGame {
         if (isCorrect) {
             // Only give points for first attempts
             if (isFirstAttempt) {
-                this.score++;
+            this.score++;
                 console.log('Correct answer on first attempt! Score is now:', this.score);
             } else {
                 console.log('Correct answer on retry - no points awarded. Score remains:', this.score);
