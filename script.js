@@ -793,8 +793,11 @@ class TimesTableGame {
                 students = result.rows.map(row => row.student_name);
             } else {
                 // Load from localStorage
+                console.log('Loading student list from localStorage');
                 const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+                console.log('All sessions for student list:', sessions);
                 students = [...new Set(sessions.map(s => s.student_name))];
+                console.log('Unique student names:', students);
             }
             
             this.displayStudentList(students);
@@ -849,8 +852,11 @@ class TimesTableGame {
                 }));
         } else {
                 // Load from localStorage
+                console.log('Loading from localStorage for student:', studentName);
                 const allSessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+                console.log('All sessions in localStorage:', allSessions);
                 sessions = allSessions.filter(s => s.student_name === studentName);
+                console.log('Filtered sessions for', studentName, ':', sessions);
             }
             
             this.displayStudentProgress(studentName, sessions);
