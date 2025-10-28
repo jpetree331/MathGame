@@ -17,6 +17,19 @@ let tursoClient = null;
 // Initialize database connection
 async function initializeDatabase() {
     try {
+        console.log("DOM loaded, initializing database...");
+        
+        // Check if libsql is available
+        if (typeof libsql === 'undefined') {
+            throw new Error("libsql client not loaded - check CDN");
+        }
+        
+        console.log("DB_CONFIG loaded:", {
+            url: DB_CONFIG.url,
+            hasToken: !!DB_CONFIG.authToken,
+            tokenLength: DB_CONFIG.authToken ? DB_CONFIG.authToken.length : 0
+        });
+        
         // Create Turso client
         tursoClient = libsql.createClient({
             url: DB_CONFIG.url,
@@ -26,10 +39,12 @@ async function initializeDatabase() {
         // Create tables if they don't exist
         await createTables();
         console.log("Database initialized successfully");
+        return true;
     } catch (error) {
         console.error("Database initialization failed:", error);
         // Fallback to localStorage for offline mode
         console.log("Falling back to localStorage for offline mode");
+        return false;
     }
 }
 
