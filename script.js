@@ -5,6 +5,12 @@ const DB_CONFIG = window.DB_CONFIG || {
     authToken: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw"
 };
 
+console.log("DB_CONFIG loaded:", {
+    url: DB_CONFIG.url,
+    hasToken: !!DB_CONFIG.authToken,
+    tokenLength: DB_CONFIG.authToken ? DB_CONFIG.authToken.length : 0
+});
+
 // Initialize Turso client
 let tursoClient = null;
 
