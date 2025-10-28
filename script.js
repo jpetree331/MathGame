@@ -1,5 +1,5 @@
 // API Configuration
-// Update this URL to your Railway backend URL after deployment
+// Uses environment variable for backend URL (set in Netlify)
 const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3000/api';
 
 console.log('API Base URL:', API_BASE_URL);
