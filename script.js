@@ -1,7 +1,6 @@
 // API Configuration
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://math-game-backend-production.up.railway.app/api'
-    : 'http://localhost:3000/api';
+// Update this URL to your Railway backend URL after deployment
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3000/api';
 
 console.log('API Base URL:', API_BASE_URL);
 
@@ -249,56 +248,46 @@ class SessionManager {
         }
 
         try {
-            const endTime = new Date();
-            const totalQuestions = this.sessionAnswers.length;
-            const correctAnswers = this.sessionAnswers.filter(a => a.is_correct).length;
-            const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+            const response = await fetch(`${API_BASE_URL}/sessions/${this.currentSessionId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    levelPassed
+                })
+            });
             
-            console.log('Session stats - Total questions:', totalQuestions, 'Correct:', correctAnswers, 'Accuracy:', accuracy);
-
-            if (tursoClient) {
-                await tursoClient.execute(`
-                    UPDATE sessions 
-                    SET end_time = CURRENT_TIMESTAMP, 
-                        total_questions = ?, 
-                        correct_answers = ?, 
-                        accuracy = ?,
-                        level_passed = ?
-                    WHERE id = ?
-                `, [totalQuestions, correctAnswers, accuracy, levelPassed, this.currentSessionId]);
-
-                // Update student stats
-                await this.updateStudentStats(levelPassed);
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('Session ended successfully:', result.stats);
             } else {
-                console.log('Saving to localStorage...');
-                // Save to localStorage
-                const sessionData = {
-                    id: this.currentSessionId,
-                    student_name: this.currentStudent,
-                    level: this.currentLevel,
-                    start_time: this.sessionStartTime,
-                    end_time: endTime,
-                    total_questions: totalQuestions,
-                    correct_answers: correctAnswers,
-                    accuracy: accuracy,
-                    level_passed: levelPassed,
-                    answers: this.sessionAnswers
-                };
-                
-                console.log('Session data to save:', sessionData);
-                
-                const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
-                sessions.push(sessionData);
-                localStorage.setItem('timesTableSessions', JSON.stringify(sessions));
-                console.log('Session saved to localStorage. Total sessions:', sessions.length);
+                throw new Error(result.error || 'Failed to end session');
             }
-
-            console.log("Session ended:", this.currentSessionId);
-            this.currentSessionId = null;
-            this.sessionAnswers = [];
         } catch (error) {
             console.error("Error ending session:", error);
+            // Fallback to localStorage
+            const endTime = new Date();
+            const totalQuestions = this.sessionAnswers.length;
+            const correctAnswers = this.sessionAnswers.filter(a => a.isCorrect).length;
+            const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+            
+            const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+            const sessionIndex = sessions.findIndex(s => s.id === this.currentSessionId);
+            if (sessionIndex !== -1) {
+                sessions[sessionIndex].end_time = endTime;
+                sessions[sessionIndex].total_questions = totalQuestions;
+                sessions[sessionIndex].correct_answers = correctAnswers;
+                sessions[sessionIndex].accuracy = accuracy;
+                sessions[sessionIndex].level_passed = levelPassed;
+                localStorage.setItem('timesTableSessions', JSON.stringify(sessions));
+                console.log('Session ended (localStorage fallback)');
+            }
         }
+        
+        this.currentSessionId = null;
+        this.sessionAnswers = [];
     }
 
     async updateStudentStats(levelPassed) {
@@ -329,31 +318,46 @@ class SessionManager {
         }
     }
 
-    async logAnswer(question, userAnswer, correctAnswer, isCorrect) {
+    async logAnswer(question, userAnswer, correctAnswer, isCorrect, isFirstAttempt = true) {
         if (!this.currentSessionId) return;
 
         const answerData = {
-            session_id: this.currentSessionId,
-            student_name: this.currentStudent,
+            sessionId: this.currentSessionId,
+            studentName: this.currentStudent,
             level: this.currentLevel,
             question: question,
-            user_answer: userAnswer,
-            correct_answer: correctAnswer,
-            is_correct: isCorrect,
-            timestamp: new Date()
+            userAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect,
+            isFirstAttempt: isFirstAttempt
         };
 
         this.sessionAnswers.push(answerData);
 
         try {
-            if (tursoClient) {
-                await tursoClient.execute(`
-                    INSERT INTO answers (session_id, student_name, level, question, user_answer, correct_answer, is_correct)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                `, [this.currentSessionId, this.currentStudent, this.currentLevel, question, userAnswer, correctAnswer, isCorrect]);
+            const response = await fetch(`${API_BASE_URL}/answers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(answerData)
+            });
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to log answer');
             }
         } catch (error) {
             console.error("Error logging answer:", error);
+            // Fallback to localStorage
+            const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+            const sessionIndex = sessions.findIndex(s => s.id === this.currentSessionId);
+            if (sessionIndex !== -1) {
+                sessions[sessionIndex].answers = sessions[sessionIndex].answers || [];
+                sessions[sessionIndex].answers.push(answerData);
+                localStorage.setItem('timesTableSessions', JSON.stringify(sessions));
+            }
         }
     }
 }
@@ -789,26 +793,23 @@ class TimesTableGame {
     
     async loadStudentList() {
         try {
-            let students = [];
+            const response = await fetch(`${API_BASE_URL}/students`);
+            const result = await response.json();
             
-            if (tursoClient) {
-                const result = await tursoClient.execute(`
-                    SELECT DISTINCT student_name FROM sessions
-                    ORDER BY student_name
-                `);
-                students = result.rows.map(row => row.student_name);
+            if (result.success) {
+                this.displayStudentList(result.students);
             } else {
-                // Load from localStorage
-                console.log('Loading student list from localStorage');
-                const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
-                console.log('All sessions for student list:', sessions);
-                students = [...new Set(sessions.map(s => s.student_name))];
-                console.log('Unique student names:', students);
+                throw new Error(result.error || 'Failed to get students');
             }
-            
-            this.displayStudentList(students);
         } catch (error) {
             console.error("Error loading student list:", error);
+            // Fallback to localStorage
+            console.log('Loading student list from localStorage');
+            const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+            console.log('All sessions for student list:', sessions);
+            const students = [...new Set(sessions.map(s => s.student_name))];
+            console.log('Unique student names:', students);
+            this.displayStudentList(students);
         }
     }
     
@@ -831,44 +832,25 @@ class TimesTableGame {
     
     async loadStudentData(studentName) {
         try {
-            let sessions = [];
+            const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(studentName)}`);
+            const result = await response.json();
             
-            if (tursoClient) {
-                const sessionsResult = await tursoClient.execute(`
-                    SELECT s.*, 
-                           COUNT(a.id) as total_questions,
-                           SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers
-                    FROM sessions s
-                    LEFT JOIN answers a ON s.id = a.session_id
-                    WHERE s.student_name = ?
-                    GROUP BY s.id
-                    ORDER BY s.start_time DESC
-                `, [studentName]);
-                
-                sessions = sessionsResult.rows.map(row => ({
-                    id: row.id,
-                    student_name: row.student_name,
-                    level: row.level,
-                    start_time: row.start_time,
-                    end_time: row.end_time,
-                    total_questions: row.total_questions || 0,
-                    correct_answers: row.correct_answers || 0,
-                    accuracy: row.total_questions > 0 ? (row.correct_answers / row.total_questions) * 100 : 0,
-                    level_passed: row.level_passed
-                }));
-        } else {
-                // Load from localStorage
-                console.log('Loading from localStorage for student:', studentName);
-                const allSessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
-                console.log('All sessions in localStorage:', allSessions);
-                sessions = allSessions.filter(s => s.student_name === studentName);
-                console.log('Filtered sessions for', studentName, ':', sessions);
+            if (result.success) {
+                this.displayStudentProgress(studentName, result.sessions);
+                await this.loadLeaderboard();
+            } else {
+                throw new Error(result.error || 'Failed to get student data');
             }
-            
-            this.displayStudentProgress(studentName, sessions);
-            await this.loadLeaderboard();
         } catch (error) {
             console.error("Error loading student data:", error);
+            // Fallback to localStorage
+            console.log('Loading from localStorage for student:', studentName);
+            const allSessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+            console.log('All sessions in localStorage:', allSessions);
+            const sessions = allSessions.filter(s => s.student_name === studentName);
+            console.log('Filtered sessions for', studentName, ':', sessions);
+            this.displayStudentProgress(studentName, sessions);
+            await this.loadLeaderboard();
         }
     }
     
@@ -929,54 +911,47 @@ class TimesTableGame {
     
     async loadLeaderboard() {
         try {
-            let students = [];
+            const response = await fetch(`${API_BASE_URL}/leaderboard`);
+            const result = await response.json();
             
-            if (tursoClient) {
-                const result = await tursoClient.execute(`
-                    SELECT name, highest_level, best_accuracy, total_sessions
-                    FROM students
-                    ORDER BY highest_level DESC, best_accuracy DESC
-                    LIMIT 10
-                `);
-                students = result.rows.map(row => ({
-                    name: row.name,
-                    highest_level: row.highest_level,
-                    best_accuracy: row.best_accuracy,
-                    total_sessions: row.total_sessions
-                }));
+            if (result.success) {
+                this.displayLeaderboard(result.leaderboard);
             } else {
-                // Load from localStorage
-                const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
-                const studentStats = {};
-                
-                sessions.forEach(session => {
-                    if (!studentStats[session.student_name]) {
-                        studentStats[session.student_name] = {
-                            name: session.student_name,
-                            highest_level: 1,
-                            best_accuracy: 0,
-                            total_sessions: 0
-                        };
-                    }
-                    
-                    studentStats[session.student_name].total_sessions++;
-                    studentStats[session.student_name].best_accuracy = Math.max(
-                        studentStats[session.student_name].best_accuracy,
-                        session.accuracy || 0
-                    );
-                    
-                    if (session.level_passed) {
-                        studentStats[session.student_name].highest_level = Math.max(
-                            studentStats[session.student_name].highest_level,
-                            session.level + 1
-                        );
-                    }
-                });
-                
-                students = Object.values(studentStats).sort((a, b) => 
-                    b.highest_level - a.highest_level || b.best_accuracy - a.best_accuracy
-                );
+                throw new Error(result.error || 'Failed to get leaderboard');
             }
+        } catch (error) {
+            console.error("Error loading leaderboard:", error);
+            // Fallback to localStorage
+            const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
+            const studentStats = {};
+            
+            sessions.forEach(session => {
+                if (!studentStats[session.student_name]) {
+                    studentStats[session.student_name] = {
+                        name: session.student_name,
+                        highest_level: 1,
+                        best_accuracy: 0,
+                        total_sessions: 0
+                    };
+                }
+                
+                studentStats[session.student_name].total_sessions++;
+                studentStats[session.student_name].best_accuracy = Math.max(
+                    studentStats[session.student_name].best_accuracy,
+                    session.accuracy || 0
+                );
+                
+                if (session.level_passed) {
+                    studentStats[session.student_name].highest_level = Math.max(
+                        studentStats[session.student_name].highest_level,
+                        session.level + 1
+                    );
+                }
+            });
+            
+            const students = Object.values(studentStats).sort((a, b) => 
+                b.highest_level - a.highest_level || b.best_accuracy - a.best_accuracy
+            );
             
             this.displayLeaderboard(students);
         } catch (error) {
