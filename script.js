@@ -362,6 +362,252 @@ class SessionManager {
     }
 }
 
+// Timed Challenge Class
+class TimedChallenge {
+    constructor() {
+        this.timeLeft = 30;
+        this.questionsAnswered = 0;
+        this.correctAnswers = 0;
+        this.currentQuestion = null;
+        this.timer = null;
+        this.isActive = false;
+        this.currentStudent = null;
+        this.challengeId = null;
+        this.questions = [];
+        
+        this.initializeElements();
+        this.setupEventListeners();
+    }
+    
+    initializeElements() {
+        this.timedChallengeScreen = document.getElementById('timedChallengeScreen');
+        this.timerDisplay = document.getElementById('timerDisplay');
+        this.timedQuestionsAnswered = document.getElementById('timedQuestionsAnswered');
+        this.timedCorrectAnswers = document.getElementById('timedCorrectAnswers');
+        this.timedQuestionText = document.getElementById('timedQuestionText');
+        this.timedAnswerInput = document.getElementById('timedAnswerInput');
+        this.timedSubmitBtn = document.getElementById('timedSubmitBtn');
+        this.startTimedChallengeBtn = document.getElementById('startTimedChallengeBtn');
+        this.backToStartFromTimedBtn = document.getElementById('backToStartFromTimedBtn');
+    }
+    
+    setupEventListeners() {
+        this.startTimedChallengeBtn.addEventListener('click', () => this.startChallenge());
+        this.backToStartFromTimedBtn.addEventListener('click', () => this.showStartScreen());
+        this.timedSubmitBtn.addEventListener('click', () => this.submitAnswer());
+        
+        this.timedAnswerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.submitAnswer();
+            }
+        });
+    }
+    
+    showTimedChallengeScreen(studentName) {
+        this.currentStudent = studentName;
+        this.currentView = 'timedChallenge';
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('studentNameScreen').style.display = 'none';
+        this.timedChallengeScreen.style.display = 'flex';
+        
+        this.resetChallenge();
+    }
+    
+    resetChallenge() {
+        this.timeLeft = 30;
+        this.questionsAnswered = 0;
+        this.correctAnswers = 0;
+        this.isActive = false;
+        this.currentQuestion = null;
+        
+        this.updateDisplay();
+        this.timedQuestionText.textContent = 'Get ready...';
+        this.timedAnswerInput.value = '';
+        this.timedAnswerInput.disabled = true;
+        this.timedSubmitBtn.disabled = true;
+    }
+    
+    async startChallenge() {
+        this.isActive = true;
+        this.generateMixedQuestions();
+        this.startTimer();
+        this.nextQuestion();
+        
+        // Start timed challenge session
+        this.challengeId = Date.now();
+        console.log('Timed challenge started:', this.challengeId);
+    }
+    
+    generateMixedQuestions() {
+        this.questions = [];
+        const operations = ['multiplication', 'division', 'addition', 'subtraction'];
+        
+        // Generate 50 questions with mixed difficulties
+        for (let i = 0; i < 50; i++) {
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            let question, answer;
+            
+            switch (operation) {
+                case 'multiplication':
+                    let a, b;
+                    do {
+                        a = Math.floor(Math.random() * 12) + 1; // 1-12, no 0
+                        b = Math.floor(Math.random() * 12) + 1; // 1-12, no 0
+                    } while (a === 0 || b === 0);
+                    answer = a * b;
+                    question = `${a} × ${b} = ?`;
+                    break;
+                    
+                case 'division':
+                    const divisor = Math.floor(Math.random() * 12) + 1;
+                    const quotient = Math.floor(Math.random() * 12) + 1;
+                    const dividend = divisor * quotient;
+                    answer = quotient;
+                    question = `${dividend} ÷ ${divisor} = ?`;
+                    break;
+                    
+                case 'addition':
+                    const add1 = Math.floor(Math.random() * 50) + 1;
+                    const add2 = Math.floor(Math.random() * 50) + 1;
+                    answer = add1 + add2;
+                    question = `${add1} + ${add2} = ?`;
+                    break;
+                    
+                case 'subtraction':
+                    const sub1 = Math.floor(Math.random() * 50) + 25;
+                    const sub2 = Math.floor(Math.random() * 25) + 1;
+                    answer = sub1 - sub2;
+                    question = `${sub1} - ${sub2} = ?`;
+                    break;
+            }
+            
+            this.questions.push({
+                question: question,
+                answer: answer,
+                operation: operation
+            });
+        }
+        
+        // Shuffle questions
+        this.questions = this.shuffleArray(this.questions);
+    }
+    
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+    
+    startTimer() {
+        this.timer = setInterval(() => {
+            this.timeLeft--;
+            this.updateTimerDisplay();
+            
+            if (this.timeLeft <= 0) {
+                this.endChallenge();
+            }
+        }, 1000);
+    }
+    
+    updateTimerDisplay() {
+        this.timerDisplay.textContent = this.timeLeft;
+        
+        if (this.timeLeft <= 10) {
+            this.timerDisplay.classList.add('warning');
+        } else {
+            this.timerDisplay.classList.remove('warning');
+        }
+    }
+    
+    nextQuestion() {
+        if (this.questions.length === 0) {
+            this.generateMixedQuestions();
+        }
+        
+        this.currentQuestion = this.questions.pop();
+        this.timedQuestionText.textContent = this.currentQuestion.question;
+        this.timedAnswerInput.value = '';
+        this.timedAnswerInput.disabled = false;
+        this.timedSubmitBtn.disabled = false;
+        this.timedAnswerInput.focus();
+    }
+    
+    submitAnswer() {
+        if (!this.isActive || !this.currentQuestion) return;
+        
+        const userAnswer = parseInt(this.timedAnswerInput.value);
+        const isCorrect = userAnswer === this.currentQuestion.answer;
+        
+        this.questionsAnswered++;
+        if (isCorrect) {
+            this.correctAnswers++;
+        }
+        
+        this.updateDisplay();
+        this.nextQuestion();
+    }
+    
+    updateDisplay() {
+        this.timedQuestionsAnswered.textContent = this.questionsAnswered;
+        this.timedCorrectAnswers.textContent = this.correctAnswers;
+    }
+    
+    endChallenge() {
+        this.isActive = false;
+        clearInterval(this.timer);
+        
+        const accuracy = this.questionsAnswered > 0 ? (this.correctAnswers / this.questionsAnswered) * 100 : 0;
+        
+        console.log('Timed challenge ended:', {
+            questionsAnswered: this.questionsAnswered,
+            correctAnswers: this.correctAnswers,
+            accuracy: accuracy
+        });
+        
+        // Save timed challenge data
+        this.saveTimedChallengeData(accuracy);
+        
+        // Show results
+        this.timedQuestionText.textContent = `Time's up! You answered ${this.questionsAnswered} questions with ${this.correctAnswers} correct (${accuracy.toFixed(1)}% accuracy)`;
+        this.timedAnswerInput.disabled = true;
+        this.timedSubmitBtn.disabled = true;
+        
+        // Show back button
+        this.backToStartFromTimedBtn.style.display = 'block';
+    }
+    
+    async saveTimedChallengeData(accuracy) {
+        try {
+            const challengeData = {
+                id: this.challengeId,
+                studentName: this.currentStudent,
+                questionsAnswered: this.questionsAnswered,
+                correctAnswers: this.correctAnswers,
+                accuracy: accuracy,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to localStorage for now (will add API later)
+            const challenges = JSON.parse(localStorage.getItem('timedChallenges') || '[]');
+            challenges.push(challengeData);
+            localStorage.setItem('timedChallenges', JSON.stringify(challenges));
+            
+            console.log('Timed challenge data saved:', challengeData);
+        } catch (error) {
+            console.error('Error saving timed challenge data:', error);
+        }
+    }
+    
+    showStartScreen() {
+        this.currentView = 'start';
+        this.timedChallengeScreen.style.display = 'none';
+        document.getElementById('startScreen').style.display = 'flex';
+    }
+}
+
 // Main Game Class
 class TimesTableGame {
     constructor() {
@@ -386,11 +632,13 @@ class TimesTableGame {
         // Start screen elements
         this.startScreen = document.getElementById('startScreen');
         this.startGameBtn = document.getElementById('startGameBtn');
+        this.timedChallengeBtn = document.getElementById('timedChallengeBtn');
         this.viewDataBtn = document.getElementById('viewDataBtn');
         
         console.log('Initializing elements...');
         console.log('startScreen:', this.startScreen);
         console.log('startGameBtn:', this.startGameBtn);
+        console.log('timedChallengeBtn:', this.timedChallengeBtn);
         console.log('viewDataBtn:', this.viewDataBtn);
         
         // Student name screen elements
@@ -455,13 +703,23 @@ class TimesTableGame {
         this.dataView.style.display = 'none';
     }
     
-    showStudentNameScreen() {
+    showStudentNameScreen(mode = 'normal') {
         this.currentView = 'name';
         this.startScreen.style.display = 'none';
         this.studentNameScreen.style.display = 'block';
         this.gameArea.style.display = 'none';
         this.levelCompleteScreen.style.display = 'none';
         this.dataView.style.display = 'none';
+        this.gameMode = mode; // Store the game mode
+        
+        // Update the screen title based on mode
+        const titleElement = this.studentNameScreen.querySelector('h2');
+        if (mode === 'timed') {
+            titleElement.textContent = 'Enter Your Name for Timed Challenge';
+        } else {
+            titleElement.textContent = 'Enter Your Name';
+        }
+        
         this.studentNameInput.focus();
     }
     
@@ -1049,6 +1307,7 @@ class TimesTableGame {
         // Start screen events
         console.log('Setting up event listeners...');
         console.log('startGameBtn element:', this.startGameBtn);
+        console.log('timedChallengeBtn element:', this.timedChallengeBtn);
         console.log('viewDataBtn element:', this.viewDataBtn);
         
         if (this.startGameBtn) {
@@ -1058,6 +1317,15 @@ class TimesTableGame {
             });
         } else {
             console.error('startGameBtn not found!');
+        }
+        
+        if (this.timedChallengeBtn) {
+            this.timedChallengeBtn.addEventListener('click', () => {
+                console.log('Timed Challenge button clicked!');
+                this.showStudentNameScreen('timed');
+            });
+        } else {
+            console.error('timedChallengeBtn not found!');
         }
         
         if (this.viewDataBtn) {
@@ -1071,7 +1339,16 @@ class TimesTableGame {
             const name = this.studentNameInput.value.trim();
             if (name) {
                 this.currentStudent = name;
-                this.startGame();
+                if (this.gameMode === 'timed') {
+                    // Start timed challenge
+                    if (!window.timedChallenge) {
+                        window.timedChallenge = new TimedChallenge();
+                    }
+                    window.timedChallenge.showTimedChallengeScreen(name);
+                } else {
+                    // Start normal game
+                    this.startGame();
+                }
             } else {
                 alert('Please enter your name!');
             }
