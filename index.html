@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Times Tables Practice</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span class="star-left">🌟</span> Math Practice Game <span class="star-right">🌟</span></h1>
+            <p>Practice your math skills with mixed operations!</p>
+        </header>
+        
+        <div class="start-screen" id="startScreen">
+            <div class="welcome-message">
+                <h2>Welcome to Math Practice Game!</h2>
+                <p>Master all four operations: ×, ÷, +, -</p>
+            </div>
+            <div class="start-buttons">
+                <button id="startGameBtn" class="start-btn">🎯 Start Game</button>
+                <button id="viewDataBtn" class="start-btn">📊 View Progress Data</button>
+            </div>
+        </div>
+
+        <div class="student-name-screen" id="studentNameScreen" style="display: none;">
+            <div class="welcome-message">
+                <h2>Enter Your Name</h2>
+                <p>What's your name, math champion?</p>
+            </div>
+            <div class="name-input-container">
+                <input type="text" id="studentNameInput" placeholder="Enter your name" maxlength="20">
+                <button id="confirmNameBtn" class="start-btn">Let's Go!</button>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea" style="display: none;">
+            <div class="game-header">
+                <div class="student-info">
+                    <span id="studentNameDisplay">Student Name</span>
+                </div>
+                <div class="level-info">
+                    <span id="levelDisplay">Level 1</span>
+                    <span id="questionProgress">Question 1/20</span>
+                </div>
+                <div class="lives-container">
+                    <span class="lives-label">Lives:</span>
+                    <div class="hearts" id="heartsContainer">
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                    </div>
+                </div>
+                <button id="endSessionBtn" class="end-session-btn">❌ End Session</button>
+            </div>
+            
+            <div class="card-container">
+                <div class="flash-card" id="flashCard">
+                    <div class="question-display">
+                        <span id="questionText">3 × 7 = ?</span>
+                    </div>
+                    <div class="answer-input-container">
+                        <input type="number" id="answerInput" placeholder="Your answer" autocomplete="off">
+                        <button id="submitBtn">Submit</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="navigation">
+                <button id="prevBtn" class="nav-btn">←</button>
+                <button id="nextBtn" class="nav-btn">→</button>
+            </div>
+            
+            <div class="controls">
+                <button id="shuffleBtn">🔀 Shuffle Questions</button>
+                <button id="newGameBtn">🎮 New Game</button>
+            </div>
+        </div>
+
+        <div class="level-complete-screen" id="levelCompleteScreen" style="display: none;">
+            <div class="level-complete-content">
+                <h2 id="levelCompleteTitle">Level Complete!</h2>
+                <div class="level-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Questions Correct:</span>
+                        <span id="correctCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Accuracy:</span>
+                        <span id="levelAccuracy">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Level:</span>
+                        <span id="completedLevel">1</span>
+                    </div>
+                </div>
+                <div id="levelResult" class="level-result"></div>
+                <div id="nyanCatContainer" class="nyan-cat-container" style="display: none;">
+                    <img src="nyan-cat-rainbow.gif" alt="Nyan Cat" class="nyan-cat-gif">
+                </div>
+                <div class="level-complete-buttons">
+                    <button id="nextLevelBtn" class="start-btn" style="display: none;">Next Level</button>
+                    <button id="retryLevelBtn" class="start-btn" style="display: none;">Try Again</button>
+                    <button id="backToStartFromLevelBtn" class="back-btn">Back to Start</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-view" id="dataView" style="display: none;">
+            <div class="data-header">
+                <h2>📊 Learning Progress</h2>
+                <button id="backToStartBtn" class="back-btn">← Back to Start</button>
+            </div>
+            
+            <div class="student-selection" id="studentSelection">
+                <h3>Select Student</h3>
+                <div id="studentList" class="student-list"></div>
+            </div>
+            
+            <div class="data-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Sessions</h3>
+                        <span id="totalSessions">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Questions</h3>
+                        <span id="totalQuestionsCount">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Overall Accuracy</h3>
+                        <span id="overallAccuracy">0%</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Best Session</h3>
+                        <span id="bestSession">0%</span>
+                    </div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>Accuracy Over Time</h3>
+                        <canvas id="accuracyChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Questions Per Session</h3>
+                        <canvas id="questionsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="leaderboard-section">
+                    <h3>🏆 Leaderboard</h3>
+                    <div id="leaderboard" class="leaderboard"></div>
+                </div>
+                
+                <div class="recent-sessions">
+                    <h3>Recent Sessions</h3>
+                    <div id="sessionsList" class="sessions-list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feedback-popup" id="feedbackPopup">
+            <div class="popup-content">
+                <span id="feedbackText"></span>
+                <button id="closePopup">Close</button>
+            </div>
+        </div>
+        
+        <div class="confetti-container" id="confettiContainer"></div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@libsql/client@latest/dist/web.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
