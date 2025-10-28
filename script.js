@@ -234,13 +234,21 @@ class SessionManager {
     }
 
     async endSession(levelPassed = false) {
-        if (!this.currentSessionId) return;
+        console.log('Ending session:', this.currentSessionId, 'levelPassed:', levelPassed);
+        console.log('Session answers:', this.sessionAnswers);
+        
+        if (!this.currentSessionId) {
+            console.log('No active session to end');
+            return;
+        }
 
         try {
             const endTime = new Date();
             const totalQuestions = this.sessionAnswers.length;
             const correctAnswers = this.sessionAnswers.filter(a => a.is_correct).length;
             const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+            
+            console.log('Session stats - Total questions:', totalQuestions, 'Correct:', correctAnswers, 'Accuracy:', accuracy);
 
             if (tursoClient) {
                 await tursoClient.execute(`
@@ -256,6 +264,7 @@ class SessionManager {
                 // Update student stats
                 await this.updateStudentStats(levelPassed);
             } else {
+                console.log('Saving to localStorage...');
                 // Save to localStorage
                 const sessionData = {
                     id: this.currentSessionId,
@@ -270,9 +279,12 @@ class SessionManager {
                     answers: this.sessionAnswers
                 };
                 
+                console.log('Session data to save:', sessionData);
+                
                 const sessions = JSON.parse(localStorage.getItem('timesTableSessions') || '[]');
                 sessions.push(sessionData);
                 localStorage.setItem('timesTableSessions', JSON.stringify(sessions));
+                console.log('Session saved to localStorage. Total sessions:', sessions.length);
             }
 
             console.log("Session ended:", this.currentSessionId);
@@ -1100,7 +1112,11 @@ class TimesTableGame {
         });
         
         this.newGameBtn.addEventListener('click', () => this.startGame());
-        this.endSessionBtn.addEventListener('click', () => this.showStartScreen());
+        this.endSessionBtn.addEventListener('click', () => {
+            console.log('End Session button clicked');
+            this.endSession();
+            this.showStartScreen();
+        });
         
         // Level complete screen events
         this.nextLevelBtn.addEventListener('click', () => this.nextLevel());
