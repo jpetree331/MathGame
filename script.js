@@ -1114,7 +1114,7 @@ class TimesTableGame {
         this.newGameBtn.addEventListener('click', () => this.startGame());
         this.endSessionBtn.addEventListener('click', () => {
             console.log('End Session button clicked');
-            this.endSession();
+            this.sessionManager.endSession();
             this.showStartScreen();
         });
         
