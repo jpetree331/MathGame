@@ -64,6 +64,7 @@ async function initializeDatabase() {
         console.error("Database initialization failed:", error);
         // Fallback to localStorage for offline mode
         console.log("Falling back to localStorage for offline mode");
+        tursoClient = null; // Ensure tursoClient is null for localStorage mode
         return false;
     }
 }
@@ -1115,6 +1116,21 @@ class TimesTableGame {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async () => {
-    await initializeDatabase();
-    new TimesTableGame();
+    console.log('DOM loaded, starting initialization...');
+    
+    try {
+        const dbInitialized = await initializeDatabase();
+        console.log('Database initialization result:', dbInitialized);
+    } catch (error) {
+        console.error('Database initialization error:', error);
+    }
+    
+    console.log('Creating game...');
+    
+    // Create game instance
+    window.game = new TimesTableGame();
+    console.log('Game created:', window.game);
+    
+    // Test that the game is working
+    console.log('Game ready - you can now click Start Game!');
 });
