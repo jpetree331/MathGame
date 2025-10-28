@@ -173,7 +173,11 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/@libsql/client@0.8.0/dist/web.js"></script>
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@libsql/client@0.8.0';
+        window.libsql = { createClient };
+        console.log("libSQL loaded via ES module");
+    </script>
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
