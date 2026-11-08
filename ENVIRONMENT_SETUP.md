@@ -13,7 +13,7 @@ This document explains how to set up environment variables for both the frontend
 
 2. **TURSO_URL** (Optional - for direct database access)
    - **Description**: Turso database URL
-   - **Example**: `libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io`
+   - **Example**: `libsql://your-database-name.turso.io`
 
 3. **TURSO_TOKEN** (Optional - for direct database access)
    - **Description**: Turso authentication token
@@ -27,8 +27,8 @@ This document explains how to set up environment variables for both the frontend
 
 ```
 REACT_APP_API_URL = https://your-railway-url.up.railway.app/api
-TURSO_URL = libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io
-TURSO_TOKEN = eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw
+TURSO_URL = libsql://your-database-name.turso.io
+TURSO_TOKEN = your-auth-token-here
 ```
 
 4. **Redeploy your site** to apply the changes
@@ -39,7 +39,7 @@ TURSO_TOKEN = eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2M
 
 1. **TURSO_URL**
    - **Description**: Turso database URL
-   - **Example**: `libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io`
+   - **Example**: `libsql://your-database-name.turso.io`
 
 2. **TURSO_TOKEN**
    - **Description**: Turso authentication token
@@ -56,8 +56,8 @@ TURSO_TOKEN = eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2M
 3. **Add the following variables**:
 
 ```
-TURSO_URL = libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io
-TURSO_TOKEN = eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw
+TURSO_URL = libsql://your-database-name.turso.io
+TURSO_TOKEN = your-auth-token-here
 PORT = 3000
 ```
 
@@ -67,8 +67,8 @@ PORT = 3000
 
 1. **Backend**: Create `backend/.env` file:
 ```
-TURSO_URL=libsql://timestablesv2-jpetree331.aws-us-east-1.turso.io
-TURSO_TOKEN=eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjE2MDUyOTAsImlkIjoiZmRiYzJiNmEtNDAzMi00NWE3LTkyMmItNzZiOTQ2ZTFiNzQ4IiwicmlkIjoiMzcxZGUxZmYtZGEzNC00M2I0LWIwZmMtOTc3NTM0OWRiNzE5In0.Lpb93O0cNPQS685Ws913Uims_e4rUIfYyXCsePiXdpn919tcLNd8PPeRQIJ8xpsWjzXxyTeZm45z32zkmQHoBw
+TURSO_URL=libsql://your-database-name.turso.io
+TURSO_TOKEN=your-auth-token-here
 PORT=3000
 ```
 
